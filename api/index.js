@@ -9,8 +9,7 @@ const app = express()
 app.use(express.json());
 dotenv.config()
 
-mongoose.connect(process.env.MONGO)
-.then(() => console.log("Connected to MongoDB.."))
+mongoose.connect(process.env.MONGO).then(() => console.log("Connected to MongoDB.."))
 .catch((err) => console.log(err));
 
 app.use('/api/user', userRouter);
