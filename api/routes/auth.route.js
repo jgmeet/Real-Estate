@@ -3,8 +3,36 @@ import User from '../models/user.model.js'
 import bcryptjs from 'bcryptjs'
 import errorHandeler from '../utils/error.js';
 import jwt from 'jsonwebtoken'
+import verifyToken from "../utils/verifyToken.js";
+
 
 const router = express.Router();
+
+router.get('/sign-out', (req, res, next) => {
+    console.log('inside server')
+
+    try {
+        res.clearCookie('token');
+        res.status(200).json('User has been logged out!');
+    } catch (error) {
+        next(error);
+    }
+})
+
+router.delete('/delete/:id', verifyToken, async (req, res, next) => {
+    if (req.user.id !== req.params.id) {
+        return next(errorHandler(401, 'You can only delete your own account!'));
+    }
+    
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.clearCookie('token');
+        res.status(200).json('User has been deleted!');
+
+    } catch (error) {
+        next(error);
+    }
+})
 
 router.post('/sign-up', async (req, res, next) => {
     const {username, email, password} = req.body
@@ -52,7 +80,7 @@ router.post('/google', async (req, res, next) => {
           const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
           const { password: pass, ...rest } = user._doc;
           res
-            .cookie('access_token', token, { httpOnly: true })
+            .cookie('token', token, { httpOnly: true })
             .status(200)
             .json(rest);
             
@@ -70,7 +98,7 @@ router.post('/google', async (req, res, next) => {
           const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
 
           const { password: pass, ...rest } = newUser._doc;
-          res.cookie('access_token', token, { httpOnly: true }).status(200).json(rest);
+          res.cookie('token', token, { httpOnly: true }).status(200).json(rest);
           
         }
       } catch (error) {
